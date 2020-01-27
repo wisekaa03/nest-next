@@ -3,7 +3,6 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { ParsedUrlQuery } from 'querystring';
 import { isInternalUrl } from './next-utils';
 import {
@@ -163,8 +162,16 @@ export class RenderService {
       throw new Error('RenderService: failed to render');
     };
 
+    let isFastifyAdapter = false;
+    try {
+      const { FastifyAdapter } = require('@nestjs/platform-fastify');
+      isFastifyAdapter = server instanceof FastifyAdapter;
+    } catch (e) {
+      // Failed to get fastify adapter. Assume it isn't.
+    }
+
     // and nextjs renderer to reply/response
-    if (server instanceof FastifyAdapter) {
+    if (isFastifyAdapter) {
       server
         .getInstance()
         .decorateReply('render', function(view: string, data?: ParsedUrlQuery) {
